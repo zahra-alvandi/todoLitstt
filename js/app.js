@@ -4,6 +4,8 @@ const cancelTodoBtn = document.querySelector(".cancel");
 const createTodoBtn = document.querySelector(".create");
 const todoInput = document.querySelector(".input");
 const todosContainer = document.querySelector(".todos-container");
+const sortBtns = document.querySelectorAll(".sort-menu button");
+const sortTypeElem = document.querySelector(".sort-type");
 
 let todos = [];
 
@@ -28,19 +30,19 @@ function addTodo() {
   todoInput.value = "";
 
   saveInToLocalStorage(todos);
-  showTodos();
+  showTodos(todos);
   hideModal();
 }
 
-function showTodos() {
+function showTodos(shownTodos) {
   todosContainer.innerHTML = "";
 
-  if (todos.length) {
-    todos.forEach(function (todo) {
+  if (shownTodos.length) {
+    shownTodos.forEach(function (todo) {
       todosContainer.insertAdjacentHTML(
         "beforeend",
         `
-          <article id="todo-${todo.id}" class="todo ${todo.isComplete ? "complete" : ""} ">
+          <article class="todo ${todo.isComplete ? "complete" : ""}">
             <div class="todo-data">
               <div class="checkbox">
                 <span>
@@ -66,38 +68,40 @@ function showTodos() {
             </div>
   
             <div class="todo-buttons">
-              <button class="delete" onclick="removeTodo(${todo.id})">حذف</button>
-              
-              <button class="complete" onclick="completeTodo(${todo.id})">تکمیل</button>
+              <button class="delete" onclick="removeTodo(${todo.id
+        })">حذف</button>
+              <button class="complete" onclick="completeTodo(${todo.id
+        })">تکمیل</button>
             </div>
           </article>
         `
       );
     });
-
   } else {
-    todosContainer.innerHTML = `<h1 style="text-align:center">تودویی یافت نشد</h1>`
+    todosContainer.innerHTML = `<h1 style="text-align:center;">تودویی یافت نشد</h1>`;
   }
 }
 
 function removeTodo(todoId) {
   const mainTodoIndex = todos.findIndex(function (todo) {
     return todo.id === todoId;
-  })
+  });
 
-  todos.splice(mainTodoIndex, 1)
-  showTodos();
+  todos.splice(mainTodoIndex, 1);
+  showTodos(todos);
   saveInToLocalStorage(todos);
 }
 
 function completeTodo(todoId) {
-  todos.forEach(function (todo) {
+  todos.some(function (todo) {
     if (todo.id === todoId) {
-      todo.isComplete = true
+      todo.isComplete = true;
+      return true;
     }
-  })
-  saveInToLocalStorage(todos)
-  showTodos()
+  });
+
+  saveInToLocalStorage(todos);
+  showTodos(todos);
 }
 
 function saveInToLocalStorage(todosArray) {
@@ -105,15 +109,51 @@ function saveInToLocalStorage(todosArray) {
 }
 
 function getDataFromLocalStorage() {
-  const localTodos = JSON.parse(localStorage.getItem("todos"))
+  const localTodos = JSON.parse(localStorage.getItem("todos"));
 
   if (localTodos) {
-    todos = localTodos
+    todos = localTodos;
   }
-  showTodos()
+
+  showTodos(todos);
 }
+
+function todoSortHandler(event) {
+  const sortType = event.target.value;
+  const sortTitle = event.target.innerHTML;
+
+  switch (sortType) {
+    case "completed": {
+      const completedTodos = todos.filter(function (todo) {
+        return todo.isComplete === true;
+      });
+
+      sortTypeElem.innerHTML = sortTitle;
+      showTodos(completedTodos);
+      break;
+    }
+
+    case "uncompleted": {
+      const unCompletedTodos = todos.filter(function (todo) {
+        return todo.isComplete === false;
+      });
+
+      sortTypeElem.innerHTML = sortTitle;
+      showTodos(unCompletedTodos);
+      break;
+    }
+
+    default: {
+      sortTypeElem.innerHTML = sortTitle;
+      showTodos(todos);
+    }
+  }
+}
+
+sortBtns.forEach(function (sortBtn) {
+  sortBtn.addEventListener("click", todoSortHandler);
+});
 
 openModalBtn.addEventListener("click", showModal);
 cancelTodoBtn.addEventListener("click", hideModal);
 createTodoBtn.addEventListener("click", addTodo);
-
